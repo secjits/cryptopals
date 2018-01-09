@@ -1,0 +1,42 @@
+=====================Problem============================
+http://cryptopals.com/sets/1/challenges/4
+
+=================Solution.py=============================
+import string
+from collections import Counter
+
+def score(s):
+	counts = Counter(s)
+	score = 0
+	letter_index = 0
+	common = "etaoinshrdlu"
+	for i in counts:
+		if counts.keys()[letter_index] in common:
+			score += counts[i]
+		letter_index += 1
+	return score
+
+def xor_string(xs, ys):
+	return "".join(chr(ord(x) ^ ord(y)) for x,y in zip(xs,ys))
+
+filename = "4.txt"
+f = open(filename, "r")
+d = {}
+
+for strCT in f:
+	CT = strCT.strip().decode("hex")
+	for mask_seed in range(256):
+		mask = ''
+		for i in range(0,len(CT)):
+			mask += chr(mask_seed)
+		PT = xor_string(CT, mask)
+		dict_index = strCT + PT	
+		d[dict_index] = score(PT) 
+f.close()
+
+high_score = max(d.values())
+print high_score
+for idx in d:
+	if d[idx] == high_score:
+		print idx
+		print ""
