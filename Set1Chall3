@@ -1,0 +1,39 @@
+=============Problem===================
+http://cryptopals.com/sets/1/challenges/3
+
+===========Solution.py=======================
+import string
+from collections import Counter
+
+def score(s):
+	counts = Counter(s)
+	score = 0
+	letter_index = 0
+	for i in counts:
+		if counts.keys()[letter_index] in string.ascii_letters:
+			score += counts[i]
+		letter_index += 1
+	return score
+
+def xor_string(xs, ys):
+	return "".join(chr(ord(x) ^ ord(y)) for x,y in zip(xs,ys))
+
+raw = '1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736'
+decoded = raw.decode("hex")
+
+print type(raw)
+print type(decoded)
+
+highscore = 0
+the_chosen_one = ""
+for mask_seed in range(256):
+	mask = ''
+	for i in range(0,len(decoded)):
+		mask += chr(mask_seed)
+	plaintext = xor_string(decoded, mask)
+	asciiness = score(plaintext)
+	if asciiness > highscore:
+		highscore = asciiness
+		the_chosen_one = plaintext
+
+print the_chosen_one
