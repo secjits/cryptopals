@@ -1,0 +1,30 @@
+=====================Problem=========================
+http://cryptopals.com/sets/1/challenges/5
+
+===============Solution.py=============================
+def xor_strings(xs, ys):
+    return "".join(chr(ord(x) ^ ord(y)) for x, y in zip(xs, ys))
+## zip() does the parsing of inputs, pairs each x,y combination together for xor'ing
+## ord() converts binary data to ASCII numbers required for ^ (str->#)
+## chr() is the inverse of ord(), applied to the xor'ed result (#->str)
+## join()concatenates the strings with separator ""
+
+#Build PT from text file 
+filename = "5.txt"
+f = open(filename,"r")
+key_seed = 'ICE'
+filecontent = f.read()
+PT = filecontent.strip().decode("ascii")
+print PT
+
+#Build key for arbitrary sized PT
+key = ""
+for i in range(0,(len(PT)/(len(key_seed))+(len(PT)%len(key_seed)))):
+	key += key_seed
+key_decoded = key.decode("ascii")
+print key_decoded
+
+#Encrypt with stream cipher
+xored = xor_strings(PT, key_decoded).encode("hex")
+print xored
+f.close()
