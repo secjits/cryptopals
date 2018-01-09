@@ -1,0 +1,18 @@
+====================Problem=======================
+http://cryptopals.com/sets/1/challenges/2
+
+===============Solution.py============================
+def xor_strings(xs, ys):
+    return "".join(chr(ord(x) ^ ord(y)) for x, y in zip(xs, ys))
+## zip() does the parsing of inputs, pairs each x,y combination together for xor'ing
+## ord() converts binary data to ASCII numbers required for ^ (str->#)
+## chr() is the inverse of ord(), applied to the xor'ed result (#->str)
+## join()concatenates the strings with separator ""
+
+raw = '1c0111001f010100061a024b53535009181c'
+mask = '686974207468652062756c6c277320657965'
+raw_decoded = raw.decode("hex")
+mask_decoded = mask.decode("hex")
+
+xored = xor_strings(raw_decoded, mask_decoded).encode("hex")
+print xored
