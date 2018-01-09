@@ -1,0 +1,135 @@
+=================Problem==================
+https://cryptopals.com/sets/1/challenges/6
+This one is a bit more challenging!!
+
+===========Solution.py======================
+import string
+import base64
+from collections import Counter
+
+pt0 = "this is a test"
+pt1 = "wokka wokka!!!"
+
+def to_bits(s0):
+	topad = '{0:b}'.format(ord(s0))
+	ret = ""
+	if (len(topad) < 8):
+		i = 8 - len(topad)
+		for j in range(i):
+			ret += "0"
+		ret += topad
+	else:
+		ret = topad	
+	return ret
+#2) Write a function to compute the edit distance/Hamming distance between two strings. The Hamming distance is just the number of differing bits.
+def hamming_dist(xs,ys):
+	dist = 0
+	pt0_b = ""
+	pt1_b = ""
+	for x,y in zip(xs,ys):
+		x_bs = to_bits(x)
+		y_bs = to_bits(y)
+		pt0_b += x_bs
+		pt1_b += y_bs
+		for x_b,y_b, in zip(x_bs,y_bs):
+			if (x_b != y_b):
+				dist += 1
+	return dist
+
+f = open("6.txt","r")
+blob = f.readlines()
+CT = ""
+for line in blob:
+	CT += base64.b64decode(line.strip()) #It's been base64'd after being encrypted with repeating-key XOR. 
+f.close()
+d = {}
+
+#1) Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40. 
+for KEYSIZE in range(2,40):
+#3) For each KEYSIZE, take the first KEYSIZE worth of bytes, and the second KEYSIZE worth of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE. 
+	toslice0 = CT[:4*KEYSIZE]
+	toslice1 = toslice0[:2*KEYSIZE]
+	cmp0 = toslice1[:KEYSIZE]
+	cmp1 = toslice1[KEYSIZE:]
+	toslice2 = toslice0[2*KEYSIZE:]
+	cmp2 = toslice2[:KEYSIZE]
+	cmp3 = toslice2[KEYSIZE:]
+
+	score0 = hamming_dist(cmp0,cmp1)/KEYSIZE
+	score1 = hamming_dist(cmp0,cmp2)/KEYSIZE
+	score2 = hamming_dist(cmp0,cmp3)/KEYSIZE
+	d[cmp0] = (score0+score1+score2)/3
+#4) The KEYSIZE with the smallest normalized edit distance is probably the key. You could proceed perhaps with the smallest 2-3 KEYSIZE values. Or take 4 KEYSIZE blocks instead of 2 and average the distances.
+base_score = min(d.values())
+lengths = []
+for k in d:
+	if (d[k] <= base_score):
+		lengths.append(len(k))
+lengths.sort()
+top = []
+top = lengths
+#5) Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
+
+transposes = []
+blocks = []
+for n in top:
+	blocks = [CT[i:i+n] for i in range(0, len(CT), n)]
+
+#6) Now transpose the blocks: make a block that is the first byte of every block, and a block that is the second byte of every block, and so on. 
+
+	transpose = []
+	for block in blocks:
+		for i in range(len(block)):
+			if (len(transpose) <= i):
+				transpose.append(block[i])
+			else:
+				transpose[i] += block[i]
+	transposes.append(transpose)
+#7) Solve each block as if it was single-character XOR. You already have code to do this. 
+## FROM chall4.py ##
+def score(s):
+	counts = Counter(s)
+	score = 0
+	letter_index = 0
+	common = "etaoin shrdlcuETAOINSHRDLCU"
+	for i in counts:
+		if counts.keys()[letter_index] in common:
+			score += counts[i]*3
+		letter_index += 1
+	return score
+
+def xor_string(xs, ys):
+	return "".join(chr(ord(x) ^ ord(y)) for x,y in zip(xs,ys))
+
+keys_o_death = []
+for t in transposes:
+	t_keys = {} # dict of keys for a given transpose, value is score
+	t_keys_index = 0 # keep track of index to restore key per transpose
+	for t_CT in t:
+		t_keys_index += 1
+		t_CT_keys = {} #dict of keys for each element in transpose
+		for key_seed in range(255):
+			key = ''
+			for i in range(0,len(t_CT)):
+				key += chr(key_seed)
+			PT = xor_string(t_CT, key)
+			t_CT_keys[score(PT)] = key[:1]
+		high_score = max(t_CT_keys.keys())
+		t_keys[t_keys_index] = t_CT_keys[high_score]
+		t_CT_keys.clear()
+		high_score = 0
+	key_o_death = ""
+	for nibblet in t_keys:
+		key_o_death += t_keys[nibblet]
+	keys_o_death.append(key_o_death)
+
+# make the key the right length for CT
+for the_chosen_key in keys_o_death:
+	print "=================KEY==============="
+	print len(the_chosen_key)
+	print the_chosen_key
+	print "=================KEY==============="
+	hopefully_decrypts_CT = ""
+	for i in range(0,(len(CT)/(len(the_chosen_key))+(len(CT)%len(the_chosen_key)))):
+		hopefully_decrypts_CT += the_chosen_key
+	print xor_string(CT,hopefully_decrypts_CT).decode("ascii")
