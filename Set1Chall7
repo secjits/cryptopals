@@ -15,3 +15,28 @@ Play that funky music A little louder now
 Play that funky music, white boy Come on, Come on, Come on 
 Play that funky music 
 
+================Solution.py========================
+import base64
+from Crypto.Cipher import AES
+
+f = open("7.txt","r")
+blob = f.readlines()
+CT = ""
+for line in blob:
+	CT += line.strip()
+f.close()
+
+g = open("7pass.txt","r")
+blob = g.readlines()
+key = ""
+for line in blob:
+	key += line.strip()
+g.close()
+
+bin_CT = base64.b64decode(CT)
+bin_key = key.decode("ascii")
+
+cipher = AES.new(bin_key, AES.MODE_ECB)
+bin_PT = cipher.decrypt(bin_CT)
+
+print bin_PT.encode("ascii")
