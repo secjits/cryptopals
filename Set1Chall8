@@ -1,0 +1,34 @@
+============Problem================
+http://cryptopals.com/sets/1/challenges/8
+
+Since all we have is ciphertext and we know that AES-ECB uses determinitic encryption, we can try to count number of duplicate blocks.
+
+============Solution.py============
+import binascii
+
+f = open("8.txt","r")
+blob = f.readlines()
+f.close()
+blocksize = 16
+scorecard = {}
+
+for line in blob:
+        hits = 0
+        formatted = binascii.a2b_hex(line.strip())
+        numberofblocks = len(formatted)/blocksize
+        for i in range(numberofblocks):
+                for j in range(i+1,numberofblocks):
+                        base_start = i*blocksize
+                        base_end = (i+1)*blocksize
+                        others_start = j*blocksize
+                        others_end = (j+1)*blocksize
+                        if (formatted[base_start:base_end] == formatted[others_start:others_end]):
+                                hits += 1
+        scorecard[line.strip()] = hits
+
+max_value = max(scorecard.values())
+max_keys = [k for k, v in scorecard.items() if v == max_value]
+print "Number of duplicates: " + str(max_value)
+for key in max_keys:
+        print key.encode("ascii")
+        del scorecard[key]
